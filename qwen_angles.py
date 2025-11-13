@@ -1,4 +1,3 @@
-cat > qwen_angles.py << 'EOF'
 import os
 import torch
 from PIL import Image
