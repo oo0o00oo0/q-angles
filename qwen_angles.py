@@ -3,13 +3,11 @@ import torch
 from PIL import Image
 from diffusers import QwenImageEditPlusPipeline
 
-# Make the allocator less fragile
+# Make CUDA allocator a bit less fragile
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 BASE_MODEL = "Qwen/Qwen-Image-Edit-2509"
 LORA_ANGLES = "dx8152/Qwen-Edit-2509-Multiple-angles"
-# We'll skip Lightning LoRA for now to reduce VRAM:
-# LORA_LIGHTNING = "lightx2v/Qwen-Image-Lightning"
 
 DTYPE = torch.float16
 
@@ -22,7 +20,7 @@ pipe = QwenImageEditPlusPipeline.from_pretrained(
     low_cpu_mem_usage=True,
 )
 
-# Let accelerate move blocks CPU <-> GPU automatically
+# Stream parts of the model CPU <-> GPU instead of keeping it all on VRAM
 pipe.enable_sequential_cpu_offload()
 pipe.enable_vae_slicing()
 
@@ -41,7 +39,8 @@ init_img = init_img.resize((512, 512))
 
 angle_prompt = "将镜头向前移动 将镜头转为广角镜头"
 
-generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(0)
+device_for_seed = "cuda" if torch.cuda.is_available() else "cpu"
+generator = torch.Generator(device=device_for_seed).manual_seed(0)
 
 print("Running inference (512x512, 4 steps)...")
 result = pipe(
@@ -59,4 +58,3 @@ result = pipe(
 
 result.save(output_path)
 print("Saved:", output_path)
-EOF
