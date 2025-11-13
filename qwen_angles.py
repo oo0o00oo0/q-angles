@@ -20,11 +20,10 @@ pipe = QwenImageEditPlusPipeline.from_pretrained(
     low_cpu_mem_usage=True,
 )
 
-# Stream parts of the model CPU <-> GPU instead of keeping it all on VRAM
-pipe.enable_sequential_cpu_offload()
-pipe.enable_vae_slicing()
+pipe.enable_sequential_cpu_offload()  # keep this
 
 print("Loading Angle LoRA...")
+
 pipe.load_lora_weights(LORA_ANGLES, adapter_name="angles")
 pipe.set_adapters(["angles"], adapter_weights=[1.0])
 
